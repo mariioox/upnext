@@ -1,0 +1,161 @@
+/*
+  up-next · Bitmap theme
+
+  Paper, ink and one loud orange. Orange is reserved for voting and the main call to action,
+  so the vote is the only colourful thing on screen.
+
+  Rules
+  - Dither patterns are decoration only. Never put text on top of a pattern (contrast).
+  - Statuses are told apart by pattern density AND their written label, never colour alone.
+  - Every animation here is switched off under prefers-reduced-motion.
+
+  Contrast (WCAG 2.2 AA), checked against paper #F3F0E8 and card #FBFAF6:
+  ink 17.9:1 · ink-muted 8.7:1 · ink on signal 5.9:1 · signal on ink 5.9:1 ·
+  line-strong (input borders) 3.6:1 · focus ring (ink) 17.9:1.
+*/
+
+/* 1. Shared component tokens: values changed, names untouched. */
+:root {
+  --color-bg: #fbfaf6;
+  --color-surface: #ece8dd;
+  --color-border: #d9d3c4;
+  --color-border-input: #8a8374;
+
+  --color-text: #141414;
+  --color-text-muted: #46423a;
+
+  --color-primary: #ff5a1f;
+  --color-primary-hover: #f0490d;
+  --color-on-primary: #141414;
+
+  --color-focus: #141414;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 2. Tailwind colours and fonts for up-next's own markup (bg-paper, text-ink, font-pixel…). */
+@theme {
+  --color-paper: #f3f0e8;
+  --color-card: #fbfaf6;
+  --color-sunk: #ece8dd;
+  --color-tag: #e6e1d3;
+  --color-ink: #141414;
+  --color-ink-muted: #46423a;
+  --color-line: #d9d3c4;
+  --color-line-strong: #8a8374;
+  --color-signal: #ff5a1f;
+  --color-signal-hover: #f0490d;
+  --color-danger-ink: #a3200f;
+
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-pixel: "Pixelify Sans", "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-signal);
+    color: var(--color-ink);
+  }
+}
+
+/* 3. Dither patterns: 2px "pixels" on a 4px tile, from sparse (06) to solid. */
+@layer utilities {
+  .dither-06 {
+    background-image: radial-gradient(var(--color-ink) 0.9px, transparent 1.1px);
+    background-size: 6px 6px;
+  }
+  .dither-25 {
+    background: conic-gradient(var(--color-ink) 0 25%, transparent 0) 0 0 / 4px 4px;
+  }
+  .dither-50 {
+    background: repeating-conic-gradient(var(--color-ink) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
+  }
+  .dither-75 {
+    background: conic-gradient(transparent 0 25%, var(--color-ink) 0) 0 0 / 4px 4px;
+  }
+  .dither-solid {
+    background: var(--color-ink);
+  }
+  .pixelated {
+    shape-rendering: crispEdges;
+  }
+}
+
+/* 4. Motion. Short, transform/opacity only, and only on change. */
+@keyframes un-bump {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.un-bump { animation: un-bump 420ms cubic-bezier(0.2, 0.9, 0.2, 1); }
+
+@keyframes un-fly {
+  from { transform: translate(-2px, -2px); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+}
+.un-bit {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 4px;
+  height: 4px;
+  background: var(--color-ink);
+  pointer-events: none;
+  animation: un-fly 700ms ease-out both;
+}
+
+/* Loader: four layers of the arrow shown in turn, sparse dots to solid orange. */
+@keyframes un-develop {
+  0% { opacity: 1; }
+  25% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.un-layer { opacity: 0; animation: un-develop 2.4s steps(1, end) infinite; }
+.un-layer-2 { animation-delay: 0.6s; }
+.un-layer-3 { animation-delay: 1.2s; }
+.un-layer-4 { animation-delay: 1.8s; }
+
+@keyframes un-scan { to { transform: translateX(1400px); } }
+.un-scan { position: absolute; top: 0; bottom: 0; left: -160px; width: 120px; opacity: 0.16; animation: un-scan 1.8s linear infinite; }
+
+@keyframes un-blink { 50% { opacity: 0; } }
+.un-blink { animation: un-blink 1s steps(1, end) infinite; }
+
+@keyframes un-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.un-rise { animation: un-rise 360ms ease-out both; }
+
+@keyframes un-peek {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.un-peek { animation: un-peek 2.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .un-bump, .un-bit, .un-scan, .un-blink, .un-rise, .un-peek { animation: none !important; }
+  .un-bit, .un-scan { display: none; }
+  .un-layer { animation: none !important; }
+  .un-layer-4 { opacity: 1; }
+}
