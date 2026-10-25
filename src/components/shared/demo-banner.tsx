@@ -1,21 +1,20 @@
 import { useGetMetaQuery } from "@/services/endpoints/meta"
-import { AlertCircle } from "lucide-react"
 
+/** Honesty label: on every page, above everything else. */
 export function DemoBanner() {
   const { data: meta } = useGetMetaQuery()
 
   return (
     <aside
       aria-label="Demonstration notice"
-      className="bg-amber-100 text-amber-950 border-b border-amber-300 px-4 py-2 text-xs md:text-sm font-medium flex items-center justify-between sticky top-0 z-50"
+      className="sticky top-0 z-50 flex h-9 items-center justify-center bg-ink px-4 text-center font-mono text-[12.5px] text-paper"
     >
-      <div className="flex items-center gap-2 mx-auto">
-        <AlertCircle className="w-4 h-4 shrink-0" />
-        <span>
-          <strong>Demonstration data:</strong> Fictional feedback board and roadmap.
-          {meta ? ` (${meta.productName} v${meta.version})` : ""}
-        </span>
-      </div>
+      <p className="m-0 truncate">
+        <strong className="text-signal">DEMO</strong>
+        <span className="hidden sm:inline"> · A fictional feedback board. Nothing here is real customer data.</span>
+        <span className="sm:hidden"> · Fictional board, not real data</span>
+        {meta && <span className="hidden md:inline"> ({meta.productName} v{meta.version})</span>}
+      </p>
     </aside>
   )
 }

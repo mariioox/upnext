@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { routes } from "@/utils/routes"
 import type { Status } from "@/models"
+import { cn } from "@/lib/cn"
+
+const SORTS = [
+  { value: "votes", label: "Top" },
+  { value: "newest", label: "New" },
+] as const
 
 export function RequestList() {
   const navigate = useNavigate()
@@ -44,7 +50,7 @@ export function RequestList() {
   const totalPages = data ? Math.ceil(data.totalItems / pageSize) : 0
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={(q) => {
@@ -61,14 +67,38 @@ export function RequestList() {
           setSelectedTag(t)
           setPage(0)
         }}
-        selectedSort={selectedSort}
-        onSortChange={(s) => {
-          setSelectedSort(s)
-          setPage(0)
-        }}
         onClearFilters={handleClearFilters}
         resultMessage={data ? `${data.totalItems} ${data.totalItems === 1 ? "request" : "requests"} found` : undefined}
       />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="group" aria-label="Sort requests" className="flex">
+          {SORTS.map((option, i) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={selectedSort === option.value}
+              onClick={() => {
+                setSelectedSort(option.value)
+                setPage(0)
+              }}
+              className={cn(
+                "min-h-10 cursor-pointer border-2 border-ink px-4 text-sm font-bold transition-colors",
+                i > 0 && "-ml-0.5",
+                selectedSort === option.value ? "bg-ink text-paper" : "bg-card text-ink hover:bg-paper",
+              )}
+            >
+              {option.value === "votes" && <span aria-hidden="true">▲ </span>}
+              {option.label}
+            </button>
+          ))}
+        </div>
+        {data && (
+          <p className="m-0 font-mono text-[13px] text-ink-muted">
+            Showing {data.items.length} of {data.totalItems}
+          </p>
+        )}
+      </div>
 
       <StateView
         isLoading={isLoading}
@@ -76,28 +106,23 @@ export function RequestList() {
         error={error}
         data={data}
         isEmpty={(d) => d.items.length === 0}
-        emptyTitle={hasActiveFilters ? "No matching requests found" : "No requests submitted yet"}
+        emptyTitle={hasActiveFilters ? (searchQuery.trim() ? `Nothing matches “${searchQuery.trim()}”` : "Nothing matches those filters") : "No requests yet"}
         emptyDescription={
           hasActiveFilters
-            ? "Try adjusting your keyword, removing tags, or clearing the status filter."
-            : "Be the first to submit a feature idea and help shape what gets built next!"
+            ? "Try fewer words, or clear the filters. Still not here? Then nobody has asked yet, so you could be first."
+            : "Nobody has suggested anything yet. Be the first, and help decide what gets built next."
         }
         emptyAction={
           hasActiveFilters
-            ? { label: "Clear all filters", onClick: handleClearFilters }
+            ? { label: "Clear filters", onClick: handleClearFilters }
             : { label: "Submit the first request", onClick: () => navigate(routes.submit) }
         }
         onRetry={refetch}
+        loadingLabel="the requests"
       >
         {(pageData) => (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-              <span>
-                Showing <strong>{pageData.items.length}</strong> of <strong>{pageData.totalItems}</strong> requests
-              </span>
-            </div>
-
-            <div className="space-y-3">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {pageData.items.map((request) => (
                 <RequestCard key={request.id} request={request} />
               ))}
@@ -105,18 +130,18 @@ export function RequestList() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-6">
+              <div className="flex items-center justify-between border-t-2 border-ink pt-4 mt-4">
                 <Button
                   variant="secondary"
                   size="sm"
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={page === 0}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  <ChevronLeft aria-hidden="true" className="w-4 h-4" />
                   Previous
                 </Button>
 
-                <span className="text-sm text-slate-600">
+                <span className="font-mono text-sm text-ink-muted">
                   Page {page + 1} of {totalPages}
                 </span>
 
@@ -127,7 +152,7 @@ export function RequestList() {
                   disabled={page >= totalPages - 1}
                 >
                   Next
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  <ChevronRight aria-hidden="true" className="w-4 h-4" />
                 </Button>
               </div>
             )}

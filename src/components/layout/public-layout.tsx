@@ -1,132 +1,94 @@
-import { Link, Outlet, useLocation } from "react-router-dom"
+import { Link, NavLink, Outlet } from "react-router-dom"
 import { DemoBanner } from "@/components/shared/demo-banner"
 import { LiveRegion } from "@/components/shared/live-region"
 import { Button } from "@/components/ui/button"
 import { LinkButton } from "@/components/shared/link-button"
+import { LogoMark } from "@/components/brand/pixel-arrow"
 import { routes } from "@/utils/routes"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { signedOut } from "@/store/authSlice"
-import { PlusCircle, LogOut, ShieldCheck, Flame, Compass, LogIn, UserPlus } from "lucide-react"
+import { cn } from "@/lib/cn"
+import { LogOut, Plus } from "lucide-react"
+
+const navClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    "px-3 py-2.5 text-[15px] text-ink",
+    isActive
+      ? "font-bold underline decoration-signal decoration-4 underline-offset-[10px]"
+      : "font-medium no-underline hover:underline hover:decoration-ink hover:decoration-2 hover:underline-offset-[10px]",
+  )
 
 export function PublicLayout() {
-  const location = useLocation()
   const dispatch = useAppDispatch()
   const { user, token } = useAppSelector((state) => state.auth)
 
-  const isNavActive = (path: string) => {
-    if (path === routes.home && location.pathname === "/") return true
-    if (path !== routes.home && location.pathname.startsWith(path)) return true
-    return false
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-paper text-ink">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-12 focus:left-3 focus:z-[60] focus:border-2 focus:border-ink focus:bg-signal focus:px-4 focus:py-2 focus:font-bold"
       >
         Skip to main content
       </a>
 
       <DemoBanner />
 
-      <header className="border-b border-slate-200 bg-white sticky top-9 z-40 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <Link to={routes.home} className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-xs group-hover:bg-blue-700 transition-colors">
-                ↑
-              </div>
-              <span className="whitespace-nowrap font-bold text-lg tracking-tight text-slate-900">up-next</span>
-            </Link>
+      <header className="sticky top-9 z-40 border-b-2 border-ink bg-paper">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+          <Link to={routes.home} className="flex items-center gap-2.5 text-ink no-underline" aria-label="up-next home">
+            <LogoMark />
+            <span className="font-pixel text-2xl font-bold whitespace-nowrap">up-next</span>
+          </Link>
 
-            <nav className="hidden sm:flex items-center gap-1" aria-label="Main Navigation">
-              <Link
-                to={routes.browse}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isNavActive(routes.browse)
-                    ? "bg-slate-100 text-blue-600 font-semibold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Flame className="w-4 h-4" />
-                  Requests
-                </div>
-              </Link>
-              <Link
-                to={routes.roadmap}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  isNavActive(routes.roadmap)
-                    ? "bg-slate-100 text-blue-600 font-semibold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
-              >
-                <div className="flex items-center gap-1.5">
-                  <Compass className="w-4 h-4" />
-                  Roadmap
-                </div>
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <LinkButton to={routes.submit} size="sm" variant="primary" className="shadow-xs">
-                <PlusCircle aria-hidden="true" className="w-4 h-4" />
-                <span className="max-[399px]:sr-only">Submit Idea</span>
-              </LinkButton>
-
-            {token && user ? (
-              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200">
-                {user.role === "ADMIN" && (
-                  <LinkButton to={routes.admin.board} size="sm" variant="secondary" className="hidden md:inline-flex border-blue-200 text-blue-700 hover:bg-blue-50">
-                      <ShieldCheck className="w-4 h-4 mr-1" />
-                      Admin Board
-                    </LinkButton>
-                )}
-                <span className="text-xs font-medium text-slate-600 hidden lg:inline">
-                  {user.displayName}
-                  {user.role === "ADMIN" && (
-                    <span className="ml-1 text-[10px] uppercase font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                      Admin
-                    </span>
-                  )}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => dispatch(signedOut())}
-                  title="Sign out"
-                  className="text-slate-500 hover:text-slate-900"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="sr-only">Sign out</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 ml-2">
-                <LinkButton to={routes.auth.login} size="sm" variant="ghost">
-                    <LogIn className="w-4 h-4 mr-1" />
-                    Sign In
-                  </LinkButton>
-                <LinkButton to={routes.auth.signup} size="sm" variant="secondary" className="hidden sm:inline-flex">
-                    <UserPlus className="w-4 h-4 mr-1" />
-                    Sign Up
-                  </LinkButton>
-              </div>
+          <nav aria-label="Main" className="order-last flex w-full gap-1 sm:order-none sm:w-auto sm:flex-1">
+            <NavLink to={routes.browse} className={navClass}>
+              Requests
+            </NavLink>
+            <NavLink to={routes.roadmap} className={navClass}>
+              Roadmap
+            </NavLink>
+            {user?.role === "ADMIN" && (
+              <NavLink to={routes.admin.board} className={navClass}>
+                Admin board
+              </NavLink>
             )}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2 sm:ml-0">
+            {token && user ? (
+              <>
+                <span className="hidden font-mono text-[13px] text-ink-muted lg:inline">{user.displayName}</span>
+                <Button size="sm" variant="ghost" onClick={() => dispatch(signedOut())} aria-label="Sign out">
+                  <LogOut aria-hidden="true" className="size-4" />
+                  <span className="hidden md:inline">Sign out</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <LinkButton to={routes.auth.login} size="sm" variant="ghost">
+                  Sign in
+                </LinkButton>
+                <LinkButton to={routes.auth.signup} size="sm" variant="secondary" className="hidden md:inline-flex">
+                  Sign up
+                </LinkButton>
+              </>
+            )}
+            <LinkButton to={routes.submit} size="sm" variant="primary" className="border-2 border-ink font-bold">
+              <Plus aria-hidden="true" className="size-4" strokeWidth={3} />
+              <span className="max-[399px]:sr-only">Submit idea</span>
+            </LinkButton>
           </div>
         </div>
       </header>
 
-      <main id="main-content" className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+      <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Outlet />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
-          <p>up-next — Public feature request board and product roadmap.</p>
-          <p className="text-slate-500">All data is fictional demonstration data. One vote per user strictly enforced.</p>
+      <footer className="mt-auto border-t-2 border-ink">
+        <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-2 px-4 py-5 font-mono text-[12.5px] text-ink-muted">
+          <span>up-next · demonstration build</span>
+          <span>All data is fictional. One vote per person.</span>
         </div>
       </footer>
 

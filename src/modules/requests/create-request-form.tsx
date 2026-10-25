@@ -65,21 +65,21 @@ export function CreateRequestForm() {
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 pb-6 border-b border-slate-100 mb-6">
-        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+    <div className="bg-card border border-line p-6 sm:p-8 max-w-2xl mx-auto">
+      <div className="flex items-center gap-3 pb-6 border-b border-line mb-6">
+        <div className="p-2.5 bg-signal text-ink border-2 border-ink">
           <Lightbulb className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Submit a Feature Request</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-2xl font-black tracking-tight text-ink">Submit a Feature Request</h2>
+          <p className="text-sm text-ink-muted">
             Tell the team what you want built. Community upvotes help decide what comes next.
           </p>
         </div>
       </div>
 
       {formError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+        <div className="mb-6 p-4 border-2 border-danger-ink bg-card text-sm text-danger-ink">
           {formError}
         </div>
       )}
@@ -136,7 +136,7 @@ export function CreateRequestForm() {
             />
 
             <div className="space-y-2">
-              <label htmlFor="tag-input" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="tag-input" className="block text-sm font-medium text-ink">
                 Tags (Optional, up to 5)
               </label>
               <div className="flex gap-2">
@@ -168,13 +168,13 @@ export function CreateRequestForm() {
                   {values.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+                      className="inline-flex items-center gap-1 py-0.5 pl-2 pr-0.5 font-mono text-xs border border-ink bg-tag text-ink"
                     >
                       #{tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(tag, values.tags || [], setFieldValue)}
-                        className="text-blue-500 hover:text-blue-800 ml-1 cursor-pointer"
+                        className="grid size-6 cursor-pointer place-items-center text-ink-muted hover:bg-ink hover:text-paper"
                         aria-label={`Remove tag ${tag}`}
                       >
                         <X className="w-3.5 h-3.5" />
@@ -185,13 +185,13 @@ export function CreateRequestForm() {
               )}
 
               {touched.tags && errors.tags && (
-                <p className="text-xs font-medium text-red-600 mt-1">
+                <p className="text-xs font-medium text-danger-ink mt-1">
                   {typeof errors.tags === "string" ? errors.tags : "Invalid tags"}
                 </p>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-line">
               <Button
                 type="button"
                 variant="ghost"
@@ -200,7 +200,7 @@ export function CreateRequestForm() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading} className="shadow-xs">
+              <Button type="submit" disabled={isLoading} className="">
                 {isLoading ? "Submitting..." : "Post Request"}
               </Button>
             </div>

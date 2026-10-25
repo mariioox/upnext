@@ -36,15 +36,15 @@ export function StatusHistoryDialog({
               <Skeleton shape="text" lines={4} />
             </div>
           ) : isError ? (
-            <p className="text-sm text-red-700 py-4 text-center">
+            <p className="text-sm text-danger-ink py-4 text-center">
               We couldn't load the status history. Close this and try again.
             </p>
           ) : history.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center italic">
+            <p className="text-sm text-ink-muted py-6 text-center italic">
               No status changes recorded for this request yet.
             </p>
           ) : (
-            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-line">
               {history.map((entry) => {
                 const formattedTime = new Date(entry.changedAt).toLocaleString(undefined, {
                   month: "short",
@@ -55,20 +55,20 @@ export function StatusHistoryDialog({
 
                 return (
                   <div key={entry.id} className="relative flex flex-col gap-1.5">
-                    <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-blue-600 border-2 border-white shadow-xs" />
+                    <div className="absolute -left-6 top-1 w-3 h-3 bg-signal border-2 border-white" />
 
                     <div className="flex items-center gap-2 text-xs flex-wrap">
                       {entry.fromStatus && (
                         <>
                           <StatusBadge status={entry.fromStatus} />
-                          <ArrowRight className="w-3 h-3 text-slate-500" />
+                          <ArrowRight className="w-3 h-3 text-ink-muted" />
                         </>
                       )}
                       <StatusBadge status={entry.toStatus} />
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                      <span className="flex items-center gap-1 font-medium text-slate-700">
+                    <div className="flex items-center justify-between text-[11px] text-ink-muted pt-0.5">
+                      <span className="flex items-center gap-1 font-medium text-ink">
                         <User className="w-3 h-3" />
                         {entry.changedBy}
                       </span>

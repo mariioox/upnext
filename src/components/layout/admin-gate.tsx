@@ -40,15 +40,15 @@ function AdminSessionGate({ children }: { children: React.ReactNode }) {
   // Role check: Only ADMIN can access
   if (user.role !== "ADMIN") {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 border border-amber-200 bg-amber-50 rounded-xl text-center">
-        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="max-w-md mx-auto my-16 p-8 border-2 border-ink bg-card text-center">
+        <div className="w-12 h-12 dither-50 border-2 border-ink text-ink flex items-center justify-center mx-auto mb-4">
           <ShieldAlert className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-amber-900 mb-2">Admin Access Required</h2>
-        <p className="text-sm text-amber-700 mb-6">
+        <h2 className="text-xl font-bold text-ink mb-2">Admin Access Required</h2>
+        <p className="text-sm text-ink-muted mb-6">
           Your account ({user.displayName}) has the role <strong>{user.role}</strong>. Only administrators can access the card management board.
         </p>
-        <LinkButton to={routes.browse} variant="secondary" className="border-amber-300 text-amber-900 hover:bg-amber-100">
+        <LinkButton to={routes.browse} variant="secondary">
             <ArrowLeft className="w-4 h-4 mr-1.5" />
             Back to Public Requests
           </LinkButton>

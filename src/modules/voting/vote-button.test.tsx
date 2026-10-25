@@ -43,7 +43,7 @@ describe("VoteButton", () => {
     expect(screen.getByText("42")).toBeDefined()
     const button = screen.getByRole("button")
     expect(button.getAttribute("aria-pressed")).toBe("false")
-    expect(button.getAttribute("aria-label")).toContain("Vote for request. Current votes: 42")
+    expect(button.getAttribute("aria-label")).toBe("Upvote this request, 42 votes")
   })
 
   it("indicates active voted state when viewerHasVoted is true", () => {
@@ -57,6 +57,6 @@ describe("VoteButton", () => {
 
     const button = screen.getByRole("button")
     expect(button.getAttribute("aria-pressed")).toBe("true")
-    expect(button.getAttribute("aria-label")).toContain("Withdraw vote")
+    expect(button.getAttribute("aria-label")).toContain("Remove your vote")
   })
 })

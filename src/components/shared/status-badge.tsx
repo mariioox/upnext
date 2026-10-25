@@ -1,19 +1,15 @@
 import type { Status } from "@/models"
-import { StatusBadge as SharedStatusBadge, type StatusBadgeTone } from "@/components/ui/status-badge"
+import { StatusBadge as SharedStatusBadge } from "@/components/ui/status-badge"
+import { STATUS_LABEL, StatusSwatch } from "@/components/brand/status-swatch"
 
-/** Maps a request status onto the shared StatusBadge. The label is always written out. */
-const STATUS: Record<Status, { label: string; tone: StatusBadgeTone }> = {
-  OPEN: { label: "Open", tone: "neutral" },
-  PLANNED: { label: "Planned", tone: "info" },
-  IN_PROGRESS: { label: "In progress", tone: "warning" },
-  COMPLETED: { label: "Completed", tone: "success" },
-}
-
+/**
+ * The shared StatusBadge, in the neutral tone, with up-next's dither swatch as its icon.
+ * Statuses are told apart by pattern density and the written label, never colour alone.
+ */
 export function StatusBadge({ status, className }: { status: Status; className?: string }) {
-  const config = STATUS[status] ?? { label: status, tone: "neutral" as const }
   return (
-    <SharedStatusBadge tone={config.tone} className={className}>
-      {config.label}
+    <SharedStatusBadge tone="neutral" icon={<StatusSwatch status={status} />} className={className}>
+      {STATUS_LABEL[status] ?? status}
     </SharedStatusBadge>
   )
 }

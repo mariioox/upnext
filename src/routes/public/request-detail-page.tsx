@@ -14,9 +14,9 @@ export function RequestDetailPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <LinkButton to={routes.browse} variant="ghost" size="sm" className="mb-4 text-slate-500 hover:text-slate-900">
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            Back to All Requests
+        <LinkButton to={routes.browse} variant="ghost" size="sm" className="-ml-3">
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            All requests
           </LinkButton>
       </div>
 
@@ -26,6 +26,7 @@ export function RequestDetailPage() {
         error={error}
         data={request}
         onRetry={refetch}
+        loadingLabel="the request"
       >
         {(item) => {
           const createdDate = new Date(item.createdAt).toLocaleDateString(undefined, {
@@ -40,21 +41,21 @@ export function RequestDetailPage() {
           })
 
           return (
-            <article className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <article className="border border-line bg-card p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-line">
                 <div className="space-y-2 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <StatusBadge status={item.status} />
                     {item.tags?.map((t) => (
                       <span
                         key={t}
-                        className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700"
+                        className="border border-ink bg-tag px-2 py-0.5 font-mono text-xs"
                       >
                         #{t}
                       </span>
                     ))}
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">
+                  <h1 className="m-0 text-3xl leading-tight font-black tracking-tight break-words sm:text-4xl">
                     {item.title}
                   </h1>
                 </div>
@@ -65,33 +66,34 @@ export function RequestDetailPage() {
                     voteCount={item.voteCount}
                     viewerHasVoted={item.viewerHasVoted}
                     status={item.status}
+                    title={item.title}
                     size="lg"
                   />
                 </div>
               </div>
 
-              <div className="py-6 border-b border-slate-100 prose max-w-none">
-                <h2 className="text-sm font-semibold uppercase text-slate-500 tracking-wider mb-2">
+              <div className="border-b border-line py-6">
+                <h2 className="m-0 mb-2 font-mono text-[13px] font-semibold tracking-[0.12em] text-ink-muted uppercase">
                   Description
                 </h2>
-                <p className="text-slate-700 whitespace-pre-line text-base leading-relaxed break-words">
+                <p className="m-0 text-base leading-relaxed whitespace-pre-line break-words">
                   {item.description}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 text-xs text-slate-500">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-4 font-mono text-[12.5px] text-ink-muted">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-slate-500" />
+                  <User aria-hidden="true" className="size-4" />
                   <span>Submitted by <strong>{item.authorName}</strong></span>
                 </div>
 
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1.5" title={`Created: ${item.createdAt}`}>
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <Clock aria-hidden="true" className="size-3.5" />
                     Posted on {createdDate}
                   </span>
                   {item.createdAt !== item.updatedAt && (
-                    <span className="text-slate-500">
+                    <span>
                       (Updated {updatedDate})
                     </span>
                   )}

@@ -26,19 +26,19 @@ export function SignupPage() {
   }
 
   return (
-    <div className="max-w-md mx-auto my-8 p-6 sm:p-8 bg-white border border-slate-200 rounded-2xl shadow-xs">
+    <div className="max-w-md mx-auto my-8 p-6 sm:p-8 bg-card border border-line">
       <div className="text-center mb-6">
-        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <div className="w-12 h-12 bg-signal text-ink border-2 border-ink flex items-center justify-center mx-auto mb-3">
           <UserPlus className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Create an Account</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-3xl font-black tracking-tight text-ink">Create an Account</h1>
+        <p className="text-sm text-ink-muted mt-1">
           Join to submit feature ideas and vote on the roadmap.
         </p>
       </div>
 
       {serverError && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg">
+        <div className="mb-6 p-3 border-2 border-danger-ink bg-card text-danger-ink text-sm">
           {serverError}
         </div>
       )}
@@ -102,9 +102,9 @@ export function SignupPage() {
             {isLoading ? "Creating account..." : "Sign Up"}
           </Button>
 
-          <p className="text-center text-xs text-slate-500 mt-4">
+          <p className="text-center text-xs text-ink-muted mt-4">
             Already have an account?{" "}
-            <Link to={routes.auth.login} className="text-blue-600 hover:underline font-medium">
+            <Link to={routes.auth.login} className="font-bold text-ink underline decoration-signal decoration-2 underline-offset-4">
               Sign in
             </Link>
           </p>

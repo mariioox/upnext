@@ -1,64 +1,33 @@
+import { Link } from "react-router-dom"
 import { useGetRoadmapQuery } from "@/services/endpoints/roadmap"
 import { StateView } from "@/components/shared/state-view"
-import { StatusBadge } from "@/components/shared/status-badge"
 import { VoteButton } from "@/modules/voting/vote-button"
-import { Link } from "react-router-dom"
+import { STATUS_LABEL, STATUS_PATTERN } from "@/components/brand/status-swatch"
 import { routes } from "@/utils/routes"
+import { cn } from "@/lib/cn"
 import type { RequestItem, Status } from "@/models"
-import { Clock, Calendar, CheckCircle2, Loader2 } from "lucide-react"
+
+const BLURB: Partial<Record<Status, string>> = {
+  PLANNED: "Agreed and on the list.",
+  IN_PROGRESS: "Being designed and built right now.",
+  COMPLETED: "Shipped and live.",
+}
 
 export function RoadmapBoard() {
   const { data: roadmap, isLoading, isError, error, refetch } = useGetRoadmapQuery()
 
-  const columns: {
-    title: string
-    status: Status
-    description: string
-    icon: React.ReactNode
-    items: RequestItem[]
-    badgeClass: string
-  }[] = [
-    {
-      title: "Planned",
-      status: "PLANNED",
-      description: "Approved requests committed to the roadmap.",
-      icon: <Calendar className="w-4 h-4 text-blue-600" />,
-      items: roadmap?.planned || [],
-      badgeClass: "bg-blue-100 text-blue-800",
-    },
-    {
-      title: "In Progress",
-      status: "IN_PROGRESS",
-      description: "Currently being designed and developed.",
-      icon: <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />,
-      items: roadmap?.inProgress || [],
-      badgeClass: "bg-amber-100 text-amber-800",
-    },
-    {
-      title: "Completed",
-      status: "COMPLETED",
-      description: "Recently shipped and live for users.",
-      icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
-      items: roadmap?.completed || [],
-      badgeClass: "bg-emerald-100 text-emerald-800",
-    },
+  const columns: { status: Status; items: RequestItem[] }[] = [
+    { status: "PLANNED", items: roadmap?.planned || [] },
+    { status: "IN_PROGRESS", items: roadmap?.inProgress || [] },
+    { status: "COMPLETED", items: roadmap?.completed || [] },
   ]
-
-  const totalCards = (roadmap?.planned?.length || 0) + (roadmap?.inProgress?.length || 0) + (roadmap?.completed?.length || 0)
+  const totalCards = columns.reduce((n, c) => n + c.items.length, 0)
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-        <p className="text-sm text-slate-600">
-          Transparent view of upcoming features. Open requests move here once planned.
-        </p>
-        {roadmap?.generatedAt && (
-          <span className="text-xs text-slate-600 flex items-center gap-1 self-start sm:self-auto">
-            <Clock className="w-3.5 h-3.5" />
-            Updated {new Date(roadmap.generatedAt).toLocaleTimeString()}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      {roadmap?.generatedAt && (
+        <p className="m-0 font-mono text-[13px] text-ink-muted">Updated {new Date(roadmap.generatedAt).toLocaleTimeString()}</p>
+      )}
 
       <StateView
         isLoading={isLoading}
@@ -66,44 +35,37 @@ export function RoadmapBoard() {
         error={error}
         data={roadmap}
         isEmpty={() => totalCards === 0}
-        emptyTitle="No features on the roadmap yet"
-        emptyDescription="Features appear on the roadmap once planned, in progress, or completed by the team."
+        emptyTitle="Nothing on the roadmap yet"
+        emptyDescription="Requests show up here once the team plans them."
         onRetry={refetch}
         skeletonCount={3}
+        loadingLabel="the roadmap"
       >
         {() => (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-3">
             {columns.map((column) => (
-              <div
+              <section
                 key={column.status}
-                className="bg-slate-100/70 border border-slate-200 rounded-2xl p-4 flex flex-col gap-3"
+                aria-label={`${STATUS_LABEL[column.status]}, ${column.items.length} ${column.items.length === 1 ? "request" : "requests"}`}
+                className="flex flex-col border border-line bg-sunk"
               >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                  <div className="flex items-center gap-2">
-                    {column.icon}
-                    <h2 className="font-bold text-slate-800 text-base">{column.title}</h2>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${column.badgeClass}`}>
-                    {column.items.length}
-                  </span>
+                <div aria-hidden="true" className={cn("h-5 border-b-2 border-ink bg-card", STATUS_PATTERN[column.status])} />
+                <div className="flex items-center justify-between px-4 pt-3.5">
+                  <h2 className="m-0 text-lg font-extrabold tracking-wide uppercase">{STATUS_LABEL[column.status]}</h2>
+                  <span className="font-pixel text-xl font-bold">{column.items.length}</span>
                 </div>
+                <p className="m-0 px-4 pt-1 pb-3 text-sm text-ink-muted">{BLURB[column.status]}</p>
 
-                <p className="text-xs text-slate-600">{column.description}</p>
-
-                {/* Column Cards */}
-                <div className="space-y-3 mt-1 min-h-[160px]">
+                <div className="flex min-h-40 flex-col gap-3 px-4 pb-4">
                   {column.items.length === 0 ? (
-                    <div className="h-32 border border-dashed border-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-600 text-center p-4">
-                      No requests in this stage
+                    <div className="flex h-28 items-center justify-center border border-dashed border-line-strong p-4 text-center font-mono text-xs text-ink-muted">
+                      Nothing at this stage yet
                     </div>
                   ) : (
-                    column.items.map((card) => (
-                      <RoadmapCardItem key={card.id} card={card} />
-                    ))
+                    column.items.map((card) => <RoadmapCardItem key={card.id} card={card} />)
                   )}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
         )}
@@ -114,40 +76,31 @@ export function RoadmapBoard() {
 
 function RoadmapCardItem({ card }: { card: RequestItem }) {
   return (
-    <article className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs hover:shadow-md transition-shadow flex flex-col gap-3 group">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          to={routes.request(card.id)}
-          className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2"
-        >
-          {card.title}
-        </Link>
-        <StatusBadge status={card.status} className="shrink-0 text-[10px] px-2" />
-      </div>
-
-      <p className="text-xs text-slate-600 line-clamp-2 break-words">
-        {card.description}
-      </p>
-
-      <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
-        <div className="flex flex-wrap gap-1">
-          {card.tags?.slice(0, 2).map((t) => (
-            <span
-              key={t}
-              className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded font-medium"
-            >
-              #{t}
-            </span>
-          ))}
-        </div>
-
-        <VoteButton
-          requestId={card.id}
-          voteCount={card.voteCount}
-          viewerHasVoted={card.viewerHasVoted}
-          status={card.status}
-          size="sm"
-        />
+    <article className="flex gap-3 border border-line bg-card p-3.5 transition-colors hover:border-ink">
+      <VoteButton
+        requestId={card.id}
+        voteCount={card.voteCount}
+        viewerHasVoted={card.viewerHasVoted}
+        status={card.status}
+        title={card.title}
+        size="sm"
+      />
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <h3 className="m-0 text-[15px] leading-snug font-bold">
+          <Link to={routes.request(card.id)} className="text-ink no-underline decoration-signal decoration-[3px] underline-offset-4 hover:underline">
+            {card.title}
+          </Link>
+        </h3>
+        <p className="m-0 line-clamp-2 text-[13px] leading-snug break-words text-ink-muted">{card.description}</p>
+        {card.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {card.tags.slice(0, 2).map((t) => (
+              <span key={t} className="border border-ink bg-tag px-1.5 py-px font-mono text-[11px]">
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   )

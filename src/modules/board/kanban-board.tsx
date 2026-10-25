@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useGetBoardQuery, useMoveRequestMutation } from "@/services/endpoints/board"
 import { StateView } from "@/components/shared/state-view"
 import { VoteButton } from "@/modules/voting/vote-button"
@@ -7,16 +7,9 @@ import { useToast } from "@/components/ui/toast"
 import { announce } from "@/components/shared/live-region"
 import { isProblem } from "@/services/httpClient/apiError"
 import type { RequestItem, Status } from "@/models"
-import {
-  Inbox,
-  Calendar,
-  Loader2,
-  CheckCircle2,
-  History,
-  MoveRight,
-  MoveLeft,
-  Clock,
-} from "lucide-react"
+import { History, MoveRight, MoveLeft } from "lucide-react"
+import { STATUS_LABEL as STATUS_NAME, STATUS_PATTERN } from "@/components/brand/status-swatch"
+import { cn } from "@/lib/cn"
 
 export function KanbanBoard() {
   const { toast } = useToast()
@@ -24,45 +17,19 @@ export function KanbanBoard() {
   const [moveRequest] = useMoveRequestMutation()
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null)
   const [selectedHistoryCard, setSelectedHistoryCard] = useState<RequestItem | null>(null)
+  // The card you just moved keeps an orange outline for a moment, so you can see where it landed.
+  const [justMovedId, setJustMovedId] = useState<string | null>(null)
+  const movedTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(movedTimer.current), [])
 
-  const columns: {
-    status: Status
-    title: string
-    items: RequestItem[]
-    icon: React.ReactNode
-    badgeBg: string
-  }[] = [
-    {
-      status: "OPEN",
-      title: "Open",
-      items: board?.open || [],
-      icon: <Inbox className="w-4 h-4 text-slate-600" />,
-      badgeBg: "bg-slate-200 text-slate-800",
-    },
-    {
-      status: "PLANNED",
-      title: "Planned",
-      items: board?.planned || [],
-      icon: <Calendar className="w-4 h-4 text-blue-600" />,
-      badgeBg: "bg-blue-100 text-blue-800",
-    },
-    {
-      status: "IN_PROGRESS",
-      title: "In Progress",
-      items: board?.inProgress || [],
-      icon: <Loader2 className="w-4 h-4 text-amber-600" />,
-      badgeBg: "bg-amber-100 text-amber-800",
-    },
-    {
-      status: "COMPLETED",
-      title: "Completed",
-      items: board?.completed || [],
-      icon: <CheckCircle2 className="w-4 h-4 text-emerald-600" />,
-      badgeBg: "bg-emerald-100 text-emerald-800",
-    },
+  const columns: { status: Status; title: string; items: RequestItem[] }[] = [
+    { status: "OPEN", title: STATUS_NAME.OPEN, items: board?.open || [] },
+    { status: "PLANNED", title: STATUS_NAME.PLANNED, items: board?.planned || [] },
+    { status: "IN_PROGRESS", title: STATUS_NAME.IN_PROGRESS, items: board?.inProgress || [] },
+    { status: "COMPLETED", title: STATUS_NAME.COMPLETED, items: board?.completed || [] },
   ]
 
-  const STATUS_LABEL: Record<Status, string> = { OPEN: "Open", PLANNED: "Planned", IN_PROGRESS: "In Progress", COMPLETED: "Completed" }
+  const STATUS_LABEL = STATUS_NAME
 
   const handleMoveCard = async (card: RequestItem, targetStatus: Status) => {
     if (card.status === targetStatus) return
@@ -78,16 +45,19 @@ export function KanbanBoard() {
       }).unwrap()
 
       toast({ variant: "success", title: `Moved “${card.title}” to ${STATUS_LABEL[targetStatus]}` })
+      window.clearTimeout(movedTimer.current)
+      setJustMovedId(card.id)
+      movedTimer.current = window.setTimeout(() => setJustMovedId(null), 2400)
       announce(`Card "${card.title}" moved to ${STATUS_LABEL[targetStatus]}`)
     } catch (err: unknown) {
       // .unwrap() rejects with the ApiError itself (see baseQuery), not { error }.
       if (isProblem(err, "STALE_VERSION")) {
-        toast({ variant: "error", title: `Another admin moved “${card.title}” first. The board now shows where it really is.` })
+        toast({ variant: "error", title: "Someone got there first", description: `Another admin moved “${card.title}” before you. The board now shows where it really is.` })
         announce("Conflict: Another admin moved this card. The board has been updated to show its true column.")
       } else if (isProblem(err, "FORBIDDEN")) {
         toast({ variant: "error", title: "You must be an admin to move cards." })
       } else {
-        toast({ variant: "error", title: "Failed to move card. Please check your connection." })
+        toast({ variant: "error", title: "That move didn’t save", description: "The card is back where it was. Check your connection and try again." })
       }
     }
   }
@@ -119,16 +89,11 @@ export function KanbanBoard() {
   }
 
   return (
-    <div className="space-y-4">
-      {board?.generatedAt && (
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Columns ordered by Most Upvoted first.</span>
-          <span className="flex items-center gap-1 font-mono">
-            <Clock className="w-3.5 h-3.5" />
-            Generated: {new Date(board.generatedAt).toLocaleTimeString()}
-          </span>
-        </div>
-      )}
+    <div className="flex flex-col gap-4">
+      <p className="m-0 flex flex-wrap justify-between gap-2 font-mono text-[13px] text-ink-muted">
+        <span>Most-voted first in each column. Drag a card, or use its arrow buttons.</span>
+        {board?.generatedAt && <span>Updated {new Date(board.generatedAt).toLocaleTimeString()}</span>}
+      </p>
 
       <StateView
         isLoading={isLoading}
@@ -137,111 +102,104 @@ export function KanbanBoard() {
         data={board}
         onRetry={refetch}
         skeletonCount={4}
+        loadingLabel="the board"
       >
         {() => (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-4">
             {columns.map((column, colIdx) => {
               const prevColumn = colIdx > 0 ? columns[colIdx - 1] : null
               const nextColumn = colIdx < columns.length - 1 ? columns[colIdx + 1] : null
 
               return (
-                <div
+                <section
                   key={column.status}
+                  aria-label={`${column.title}, ${column.items.length} ${column.items.length === 1 ? "request" : "requests"}`}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, column.status)}
-                  className="bg-slate-100/80 border border-slate-200 rounded-xl p-3 flex flex-col min-h-[500px]"
+                  className="flex min-h-[420px] flex-col border border-line bg-sunk"
                 >
-                  {/* Column Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
-                    <div className="flex items-center gap-2">
-                      {column.icon}
-                      <h2 className="font-bold text-sm text-slate-800">{column.title}</h2>
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${column.badgeBg}`}>
-                      {column.items.length}
-                    </span>
+                  <div aria-hidden="true" className={cn("h-4 border-b-2 border-ink bg-card", STATUS_PATTERN[column.status])} />
+                  <div className="flex items-center justify-between px-3 pt-3 pb-2">
+                    <h2 className="m-0 text-[15px] font-extrabold tracking-wide uppercase">{column.title}</h2>
+                    <span className="font-pixel text-lg font-bold">{column.items.length}</span>
                   </div>
 
-                  {/* Cards List */}
-                  <div className="flex-1 space-y-2.5">
+                  <div className="flex flex-1 flex-col gap-3 px-3 pb-3">
                     {column.items.length === 0 ? (
-                      <div className="h-32 border border-dashed border-slate-200 rounded-lg flex items-center justify-center text-xs text-slate-600 text-center p-3">
-                        Drop cards here
+                      <div className="flex h-28 items-center justify-center border border-dashed border-line-strong p-3 text-center font-mono text-xs text-ink-muted">
+                        Nothing here. Drop a card to move it.
                       </div>
                     ) : (
-                      column.items.map((card) => (
-                        <div
-                          key={card.id}
-                          draggable
-                          onDragStart={(e) => handleDragStart(e, card)}
-                          className={`bg-white border rounded-lg p-3 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing ${
-                            draggedCardId === card.id
-                              ? "opacity-40 border-blue-400"
-                              : "border-slate-200 hover:border-slate-300"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-1.5 mb-2">
-                            <span className="font-semibold text-xs text-slate-900 line-clamp-2">
-                              {card.title}
-                            </span>
-                            <div className="flex items-center gap-1 shrink-0">
+                      column.items.map((card) => {
+                        const moved = justMovedId === card.id
+                        return (
+                          <article
+                            key={card.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, card)}
+                            className={cn(
+                              "flex cursor-grab flex-col gap-2.5 border bg-card p-3 transition-colors active:cursor-grabbing",
+                              draggedCardId === card.id ? "border-ink opacity-50" : "border-line hover:border-ink",
+                              moved && "outline-[3px] outline-offset-[3px] outline-signal outline-solid",
+                            )}
+                          >
+                            {moved && (
+                              <span className="self-start border-2 border-ink bg-signal px-1.5 py-0.5 font-mono text-[11.5px] font-semibold">
+                                Moved just now
+                              </span>
+                            )}
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="m-0 line-clamp-2 text-[15px] leading-snug font-bold">{card.title}</h3>
                               <button
                                 type="button"
                                 onClick={() => setSelectedHistoryCard(card)}
-                                title="View status history"
-                                className="p-1 rounded text-slate-500 hover:text-blue-600 hover:bg-slate-50 cursor-pointer"
-                                aria-label={`View status history for ${card.title}`}
+                                className="-m-1 grid size-8 shrink-0 cursor-pointer place-items-center text-ink-muted hover:bg-sunk hover:text-ink"
+                                aria-label={`Status history for “${card.title}”`}
                               >
-                                <History className="w-3.5 h-3.5" />
+                                <History aria-hidden="true" className="size-4" />
                               </button>
                             </div>
-                          </div>
 
-                          <p className="text-[11px] text-slate-500 line-clamp-2 mb-2 break-words">
-                            {card.description}
-                          </p>
+                            <p className="m-0 line-clamp-2 text-[13px] leading-snug break-words text-ink-muted">{card.description}</p>
 
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[10px] text-slate-500">
-                            <VoteButton
-                              requestId={card.id}
-                              voteCount={card.voteCount}
-                              viewerHasVoted={card.viewerHasVoted}
-                              status={card.status}
-                              size="sm"
-                              className="scale-90 origin-left"
-                            />
-
-                            {/* Keyboard Accessible Column Move Buttons */}
-                            <div className="flex items-center gap-1">
-                              {prevColumn && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveCard(card, prevColumn.status)}
-                                  className="inline-flex size-8 items-center justify-center rounded-md bg-white border border-slate-400 hover:bg-slate-100 text-slate-800 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-                                  title={`Move left to ${prevColumn.title}`}
-                                  aria-label={`Move “${card.title}” left to ${prevColumn.title}`}
-                                >
-                                  <MoveLeft aria-hidden="true" className="w-4 h-4" />
-                                </button>
-                              )}
-                              {nextColumn && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveCard(card, nextColumn.status)}
-                                  className="inline-flex size-8 items-center justify-center rounded-md bg-white border border-slate-400 hover:bg-slate-100 text-slate-800 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-                                  title={`Move right to ${nextColumn.title}`}
-                                  aria-label={`Move “${card.title}” right to ${nextColumn.title}`}
-                                >
-                                  <MoveRight aria-hidden="true" className="w-4 h-4" />
-                                </button>
-                              )}
+                            <div className="flex items-center justify-between border-t border-line pt-2.5">
+                              <VoteButton
+                                requestId={card.id}
+                                voteCount={card.voteCount}
+                                viewerHasVoted={card.viewerHasVoted}
+                                status={card.status}
+                                title={card.title}
+                                size="sm"
+                              />
+                              <div className="flex items-center gap-1.5">
+                                {prevColumn && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveCard(card, prevColumn.status)}
+                                    className="grid size-9 cursor-pointer place-items-center border-[1.5px] border-ink bg-paper hover:bg-signal"
+                                    aria-label={`Move “${card.title}” left to ${prevColumn.title}`}
+                                  >
+                                    <MoveLeft aria-hidden="true" className="size-4" />
+                                  </button>
+                                )}
+                                {nextColumn && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveCard(card, nextColumn.status)}
+                                    className="grid size-9 cursor-pointer place-items-center border-[1.5px] border-ink bg-paper hover:bg-signal"
+                                    aria-label={`Move “${card.title}” right to ${nextColumn.title}`}
+                                  >
+                                    <MoveRight aria-hidden="true" className="size-4" />
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      ))
+                          </article>
+                        )
+                      })
                     )}
                   </div>
-                </div>
+                </section>
               )
             })}
           </div>
