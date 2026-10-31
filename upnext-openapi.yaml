@@ -21,7 +21,7 @@ servers:
     description: Local service
   - url: http://localhost:4011
     description: Prism mock
-  - url: https://REPLACE-ME.onrender.com
+  - url: https://upnext-api-iqby.onrender.com
     description: Deployed service
 tags:
   - name: Meta
